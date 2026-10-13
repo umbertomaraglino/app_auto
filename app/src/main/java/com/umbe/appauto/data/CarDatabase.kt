@@ -26,10 +26,27 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
-@Database(entities = [Car::class, KmEntry::class], version = 3, exportSchema = false)
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS `car_documents` (
+                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `carId` INTEGER NOT NULL,
+                `name` TEXT NOT NULL,
+                `fileName` TEXT NOT NULL,
+                `mimeType` TEXT NOT NULL,
+                `filePath` TEXT NOT NULL,
+                `addedDate` INTEGER NOT NULL
+            )
+        """)
+    }
+}
+
+@Database(entities = [Car::class, KmEntry::class, CarDocument::class], version = 4, exportSchema = false)
 abstract class CarDatabase : RoomDatabase() {
     abstract fun carDao(): CarDao
     abstract fun kmEntryDao(): KmEntryDao
+    abstract fun documentDao(): CarDocumentDao
 
     companion object {
         @Volatile
@@ -42,7 +59,7 @@ abstract class CarDatabase : RoomDatabase() {
                     CarDatabase::class.java,
                     "car_database"
                 )
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                     .build()
                     .also { INSTANCE = it }
             }
