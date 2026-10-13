@@ -83,7 +83,6 @@ fun ScadenzeTab(car: Car, onUpdate: (Car) -> Unit) {
             ultimaKm = car.catenaUltimaKm,
             currentKm = car.kilometraggio,
             onSave = { ogni, ultima -> onUpdate(car.copy(catenaOgniKm = ogni, catenaUltimaKm = ultima)) },
-            onFattaAdesso = { onUpdate(car.copy(catenaUltimaKm = car.kilometraggio)) },
             onDismiss = { showCatenaDialog = false }
         )
     }
@@ -95,7 +94,6 @@ fun ScadenzeTab(car: Car, onUpdate: (Car) -> Unit) {
             ultimaKm = car.gommeUltimaKm,
             currentKm = car.kilometraggio,
             onSave = { ogni, ultima -> onUpdate(car.copy(gommeOgniKm = ogni, gommeUltimaKm = ultima)) },
-            onFattaAdesso = { onUpdate(car.copy(gommeUltimaKm = car.kilometraggio)) },
             onDismiss = { showGommeDialog = false }
         )
     }
@@ -520,7 +518,6 @@ private fun KmOnlyDialog(
     ultimaKm: Int,
     currentKm: Int,
     onSave: (ogni: Int, ultima: Int) -> Unit,
-    onFattaAdesso: () -> Unit,
     onDismiss: () -> Unit
 ) {
     var ogniKmText by remember { mutableStateOf(if (ogniKm > 0) ogniKm.toString() else "") }
@@ -551,6 +548,16 @@ private fun KmOnlyDialog(
                     suffix = { Text("km") },
                     placeholder = { Text("es. 50000") }
                 )
+                if (currentKm > 0) {
+                    OutlinedButton(
+                        onClick = { ultimaKmText = currentKm.toString() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Fatta adesso (${formatKm(currentKm)})")
+                    }
+                }
                 Button(
                     onClick = {
                         onSave(ogniKmText.toIntOrNull() ?: 0, ultimaKmText.toIntOrNull() ?: 0)
@@ -559,19 +566,6 @@ private fun KmOnlyDialog(
                     modifier = Modifier.fillMaxWidth(),
                     enabled = ogniKmText.isNotBlank()
                 ) { Text("Salva") }
-                if (currentKm > 0) {
-                    OutlinedButton(
-                        onClick = {
-                            onFattaAdesso()
-                            onDismiss()
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text("Fatta adesso (${formatKm(currentKm)})")
-                    }
-                }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
