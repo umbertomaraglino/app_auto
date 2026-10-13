@@ -33,6 +33,8 @@ fun ScadenzeTab(car: Car, onUpdate: (Car) -> Unit) {
 
     var editingField by remember { mutableStateOf<String?>(null) }
     var showManutenzioneDialog by remember { mutableStateOf(false) }
+    var showCatenaDialog by remember { mutableStateOf(false) }
+    var showGommeDialog by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
 
     // Dialog data scadenza (per assicurazione, bollo, revisione)
@@ -43,15 +45,17 @@ fun ScadenzeTab(car: Car, onUpdate: (Car) -> Unit) {
             "revisione" -> car.scadenzaRevisione
             else -> 0L
         }
+        val renewYears = if (editingField == "revisione") 2L else 1L
+        val renewLabel = if (editingField == "revisione") "Rinnova +2 anni" else "Rinnova +1 anno"
         DatePickerDialog(
             onDismissRequest = { editingField = null },
             confirmButton = {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     TextButton(onClick = {
                         val base = if (currentEpoch > 0L) LocalDate.ofEpochDay(currentEpoch) else LocalDate.now()
-                        onUpdate(fieldUpdate(car, editingField!!, base.plusYears(1).toEpochDay()))
+                        onUpdate(fieldUpdate(car, editingField!!, base.plusYears(renewYears).toEpochDay()))
                         editingField = null
-                    }) { Text("Rinnova +1 anno") }
+                    }) { Text(renewLabel) }
                     TextButton(onClick = {
                         val millis = datePickerState.selectedDateMillis
                         if (millis != null) onUpdate(fieldUpdate(car, editingField!!, millis / 86400000L))
@@ -69,6 +73,30 @@ fun ScadenzeTab(car: Car, onUpdate: (Car) -> Unit) {
             car = car,
             onUpdate = onUpdate,
             onDismiss = { showManutenzioneDialog = false }
+        )
+    }
+
+    if (showCatenaDialog) {
+        KmOnlyDialog(
+            title = "Sostituzione Catena",
+            ogniKm = car.catenaOgniKm,
+            ultimaKm = car.catenaUltimaKm,
+            currentKm = car.kilometraggio,
+            onSave = { ogni, ultima -> onUpdate(car.copy(catenaOgniKm = ogni, catenaUltimaKm = ultima)) },
+            onFattaAdesso = { onUpdate(car.copy(catenaUltimaKm = car.kilometraggio)) },
+            onDismiss = { showCatenaDialog = false }
+        )
+    }
+
+    if (showGommeDialog) {
+        KmOnlyDialog(
+            title = "Cambio Gomme",
+            ogniKm = car.gommeOgniKm,
+            ultimaKm = car.gommeUltimaKm,
+            currentKm = car.kilometraggio,
+            onSave = { ogni, ultima -> onUpdate(car.copy(gommeOgniKm = ogni, gommeUltimaKm = ultima)) },
+            onFattaAdesso = { onUpdate(car.copy(gommeUltimaKm = car.kilometraggio)) },
+            onDismiss = { showGommeDialog = false }
         )
     }
 
@@ -95,6 +123,24 @@ fun ScadenzeTab(car: Car, onUpdate: (Car) -> Unit) {
         ScadenzaCard(label = "Revisione", icon = Icons.Default.FactCheck,
             epochDay = car.scadenzaRevisione, today = today, formatter = formatter,
             onClick = { editingField = "revisione" })
+
+        KmOnlyCard(
+            label = "Sostituzione Catena",
+            icon = Icons.Default.Link,
+            ogniKm = car.catenaOgniKm,
+            ultimaKm = car.catenaUltimaKm,
+            currentKm = car.kilometraggio,
+            onClick = { showCatenaDialog = true }
+        )
+
+        KmOnlyCard(
+            label = "Cambio Gomme",
+            icon = Icons.Default.Autorenew,
+            ogniKm = car.gommeOgniKm,
+            ultimaKm = car.gommeUltimaKm,
+            currentKm = car.kilometraggio,
+            onClick = { showGommeDialog = true }
+        )
     }
 }
 
@@ -382,6 +428,154 @@ private fun ScadenzaCard(
             }
         }
     }
+}
+
+@Composable
+private fun KmOnlyCard(
+    label: String,
+    icon: ImageVector,
+    ogniKm: Int,
+    ultimaKm: Int,
+    currentKm: Int,
+    onClick: () -> Unit
+) {
+    val kmStatus: KmStatus? = if (ogniKm > 0) {
+        val prossima = ultimaKm + ogniKm
+        val mancano = prossima - currentKm
+        KmStatus(prossima = prossima, mancano = mancano)
+    } else null
+
+    val kmScaduta = kmStatus != null && kmStatus.mancano <= 0
+    val kmUrgente = kmStatus != null && kmStatus.mancano in 1..1000
+    val kmProsto = kmStatus != null && kmStatus.mancano in 1001..3000
+
+    val (bgColor, iconBg, iconTint, badgeText, badgeBg, badgeTextColor) = when {
+        kmScaduta -> ScadenzaColors(UrgencyRedBg, UrgencyRed.copy(0.15f), UrgencyRed, "SCADUTA", UrgencyRed, Color.White)
+        kmUrgente -> ScadenzaColors(UrgencyRedBg, UrgencyRed.copy(0.15f), UrgencyRed, "URGENTE", UrgencyRed, Color.White)
+        kmProsto -> ScadenzaColors(UrgencyOrangeBg, UrgencyOrange.copy(0.15f), UrgencyOrange, "PRESTO", UrgencyOrange, Color.White)
+        kmStatus != null -> ScadenzaColors(UrgencyGreenBg, UrgencyGreen.copy(0.15f), UrgencyGreen, "OK", UrgencyGreen, Color.White)
+        else -> ScadenzaColors(Color.White, Color(0xFFF1F5F9), Color(0xFF94A3B8), "—", Color(0xFFF1F5F9), Color(0xFF94A3B8))
+    }
+
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = bgColor),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(iconBg),
+                    contentAlignment = Alignment.Center
+                ) { Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(26.dp)) }
+                Spacer(Modifier.width(14.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(label, style = MaterialTheme.typography.titleMedium, color = Color(0xFF0F172A))
+                    if (kmStatus == null) {
+                        Text("Tocca per impostare", style = MaterialTheme.typography.bodySmall, color = Color(0xFF94A3B8))
+                    }
+                }
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(badgeBg).padding(horizontal = 8.dp, vertical = 3.dp)
+                ) { Text(badgeText, style = MaterialTheme.typography.labelSmall, color = badgeTextColor, fontWeight = FontWeight.Bold) }
+            }
+
+            if (kmStatus != null) {
+                Spacer(Modifier.height(10.dp))
+                HorizontalDivider(color = iconTint.copy(alpha = 0.15f))
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text("Prossima a", style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B))
+                        Text(formatKm(kmStatus.prossima), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF0F172A))
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Ogni", style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B))
+                        Text(formatKm(ogniKm), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = Color(0xFF0F172A))
+                    }
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text("Mancano", style = MaterialTheme.typography.labelSmall, color = Color(0xFF64748B))
+                        Text(
+                            if (kmStatus.mancano > 0) formatKm(kmStatus.mancano) else "Scaduta",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (kmStatus.mancano <= 1000) UrgencyRed else if (kmStatus.mancano <= 3000) UrgencyOrange else UrgencyGreen
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun KmOnlyDialog(
+    title: String,
+    ogniKm: Int,
+    ultimaKm: Int,
+    currentKm: Int,
+    onSave: (ogni: Int, ultima: Int) -> Unit,
+    onFattaAdesso: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    var ogniKmText by remember { mutableStateOf(if (ogniKm > 0) ogniKm.toString() else "") }
+    var ultimaKmText by remember { mutableStateOf(if (ultimaKm > 0) ultimaKm.toString() else "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OutlinedTextField(
+                    value = ogniKmText,
+                    onValueChange = { ogniKmText = it.filter { c -> c.isDigit() } },
+                    label = { Text("Ogni X km") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    suffix = { Text("km") },
+                    placeholder = { Text("es. 60000") }
+                )
+                OutlinedTextField(
+                    value = ultimaKmText,
+                    onValueChange = { ultimaKmText = it.filter { c -> c.isDigit() } },
+                    label = { Text("Ultima sostituzione fatta a") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    suffix = { Text("km") },
+                    placeholder = { Text("es. 50000") }
+                )
+                Button(
+                    onClick = {
+                        onSave(ogniKmText.toIntOrNull() ?: 0, ultimaKmText.toIntOrNull() ?: 0)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = ogniKmText.isNotBlank()
+                ) { Text("Salva") }
+                if (currentKm > 0) {
+                    OutlinedButton(
+                        onClick = {
+                            onFattaAdesso()
+                            onDismiss()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Fatta adesso (${formatKm(currentKm)})")
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Chiudi") } }
+    )
 }
 
 private data class ScadenzaColors(

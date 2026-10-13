@@ -17,7 +17,16 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
-@Database(entities = [Car::class, KmEntry::class], version = 2, exportSchema = false)
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE `cars` ADD COLUMN `catenaOgniKm` INTEGER NOT NULL DEFAULT 0")
+        database.execSQL("ALTER TABLE `cars` ADD COLUMN `catenaUltimaKm` INTEGER NOT NULL DEFAULT 0")
+        database.execSQL("ALTER TABLE `cars` ADD COLUMN `gommeOgniKm` INTEGER NOT NULL DEFAULT 0")
+        database.execSQL("ALTER TABLE `cars` ADD COLUMN `gommeUltimaKm` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
+@Database(entities = [Car::class, KmEntry::class], version = 3, exportSchema = false)
 abstract class CarDatabase : RoomDatabase() {
     abstract fun carDao(): CarDao
     abstract fun kmEntryDao(): KmEntryDao
@@ -33,7 +42,7 @@ abstract class CarDatabase : RoomDatabase() {
                     CarDatabase::class.java,
                     "car_database"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { INSTANCE = it }
             }

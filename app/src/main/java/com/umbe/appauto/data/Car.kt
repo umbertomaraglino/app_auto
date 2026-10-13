@@ -18,5 +18,11 @@ data class Car(
     val scadenzaRevisione: Long = 0L,
     // manutenzione km-based
     val manutenzioneOgniKm: Int = 0,
-    val manutenzioneUltimaKm: Int = 0
+    val manutenzioneUltimaKm: Int = 0,
+    // catena km-based
+    val catenaOgniKm: Int = 0,
+    val catenaUltimaKm: Int = 0,
+    // gomme km-based
+    val gommeOgniKm: Int = 0,
+    val gommeUltimaKm: Int = 0
 )
