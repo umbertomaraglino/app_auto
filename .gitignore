@@ -1,0 +1,25 @@
+# Built artifacts
+*.apk
+*.aab
+*.ap_
+*.dex
+build/
+app/build/
+
+# Local config (contains your SDK path, must not be shared)
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+.gradle/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Heap dumps
+*.hprof
+
+# Keystore files
+*.jks
+*.keystore
