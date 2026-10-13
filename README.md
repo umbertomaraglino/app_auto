@@ -1,11 +1,11 @@
 # 🚗 App Auto
 
-An Android app to manage your vehicles and never miss a deadline again.  
-Track insurance, road tax, MOT and maintenance for each car — with smart color-coded alerts based on days remaining or kilometres driven.
+Un'app Android per gestire i tuoi veicoli e non dimenticare mai una scadenza.  
+Tieni traccia di assicurazione, bollo, revisione e manutenzione per ogni auto — con avvisi visivi basati sui giorni rimanenti o sui chilometri percorsi.
 
 ---
 
-## Screenshots
+## Screenshot
 
 <p align="center">
   <img src="foto/Screenshot_20261013_090022.png" width="22%" />
@@ -16,37 +16,37 @@ Track insurance, road tax, MOT and maintenance for each car — with smart color
 
 ---
 
-## Features
+## Funzionalità
 
-- **Multi-vehicle support** — add and manage multiple cars, each with name, brand, model, fuel type and licence plate
-- **Deadline tracking** — assicurazione (insurance), bollo (road tax), revisione (MOT) and manutenzione (maintenance)
-- **Smart alerts** — cards change colour from green → yellow → orange → red as deadlines approach, and turn red when expired
-- **Km-based maintenance reminders** — set a service interval (e.g. every 10,000 km) and the app calculates how many km are left based on your current mileage
-- **Mileage history** — log odometer readings over time and see the full history at a glance
-- **Quick renew** — one-tap "+1 year" renewal for insurance, road tax and MOT
+- **Gestione multi-veicolo** — aggiungi e gestisci più auto, ognuna con nome, marca, modello, carburante e targa
+- **Scadenze** — assicurazione, bollo, revisione e manutenzione tutte in un posto
+- **Avvisi a colori** — le card cambiano colore da verde → giallo → arancione → rosso man mano che la scadenza si avvicina, e diventano rosse quando è già scaduta
+- **Promemoria manutenzione a km** — imposta un intervallo (es. ogni 10.000 km) e l'app calcola automaticamente quanti km mancano al prossimo tagliando
+- **Storico chilometraggio** — registra le letture del contachilometri nel tempo e consulta lo storico completo
+- **Rinnovo rapido** — pulsante "+1 anno" per rinnovare assicurazione, bollo e revisione in un tap
 
 ---
 
-## Tech Stack
+## Tecnologie
 
-| Layer | Technology |
+| Livello | Tecnologia |
 |---|---|
-| Language | **Kotlin** |
+| Linguaggio | **Kotlin** |
 | UI | **Jetpack Compose** + Material 3 |
-| Architecture | **MVVM** (ViewModel + StateFlow) |
-| Local database | **Room** |
-| Background tasks | **WorkManager** |
-| Navigation | **Navigation Compose** |
+| Architettura | **MVVM** (ViewModel + StateFlow) |
+| Database locale | **Room** |
+| Task in background | **WorkManager** |
+| Navigazione | **Navigation Compose** |
 | Min SDK | Android 8.0 (API 26) |
 
 ---
 
 ## Build
 
-Clone the repo and open in Android Studio, or build from the command line:
+Clona il repository e aprilo in Android Studio, oppure compila da riga di comando:
 
 ```bash
 ./gradlew assembleDebug
 ```
 
-The APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
+L'APK sarà disponibile in `app/build/outputs/apk/debug/app-debug.apk`.
